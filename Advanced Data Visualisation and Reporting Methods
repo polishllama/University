@@ -1,0 +1,197 @@
+# Load necessary libraries
+library(shiny)
+library(shinydashboard)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+setwd("D:/rworks")
+load("przejazdy.rdata")
+
+# Add a column to the data frame indicating if it is a weekday or weekend
+przejazdy <- przejazdy %>% mutate(Weektype = ifelse(wday(Data) %in% 2:6, 'Weekday', 'Weekend'))
+
+# Define UI for application
+ui <- dashboardPage(
+  dashboardHeader(title = "Zaliczenie"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Strona Główna", tabName = "strona_głowna", icon = icon("dashboard")),
+      menuItem("Zadanie 1", tabName = "zad1", icon = icon("file")),
+      menuItem("Zadanie 2", tabName = "zad2", icon = icon("file")),
+      menuItem("Zadanie 3", tabName = "zad3", icon = icon("file")),
+      menuItem("Zadanie 4", tabName = "zad4", icon = icon("file")),
+      menuItem("Zadanie 5", tabName = "zad5", icon = icon("file")),
+      menuItem("Zadanie 6", tabName = "zad6", icon = icon("file")),
+      menuItem("Zadanie 7", tabName = "zad7", icon = icon("file"))
+    )
+  ),
+  
+  dashboardBody(
+    tabItems(
+      #Strona glowna
+      tabItem(tabName = "strona_głowna",
+              h2("Strona Glowna"),
+              verbatimTextOutput("text")
+      ),
+      
+      # Zadanie 1
+      tabItem(tabName = "zad1",
+              h2("Zadanie 1"),
+              h3("Przedstaw rozkład dni pomiarowych w poszczególnych punktach"),
+              dateRangeInput('dateRange1', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              plotOutput("plot1")
+      ),
+      
+      # Zadanie 2
+      tabItem(tabName = "zad2",
+              h2("Zadanie 2"),
+              h3("Dla wybranego punktu przedstaw rozklad liczby przejazdow"),
+              dateRangeInput('dateRange2', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              selectInput("stacja2", "Wybierz stacje", choices = unique(przejazdy$Stacja)),
+              plotOutput("plot2")
+      ),
+      
+      # Zadanie 3
+      tabItem(tabName = "zad3",
+              h2("Zadanie 3"),
+              h3("Dla wybranych punktow przedstaw rozklad liczby przejazdow"),
+              dateRangeInput('dateRange3', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              selectInput("stacja3", "Wybierz stacje", choices = unique(przejazdy$Stacja), multiple = TRUE),
+              plotOutput("plot3")
+      ),
+      
+      # Zadanie 4
+      tabItem(tabName = "zad4",
+              h2("Zadanie 4"),
+              h3("Przedstaw natezenie ruchu dla wybranej stacji w zaleznosc od miesiaca/dnia tygodnia/typu dnia"),
+              dateRangeInput('dateRange4', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              selectInput("stacja4", "Wybierz stacje", choices = unique(przejazdy$Stacja)),
+              plotOutput("plot4_1"),
+              plotOutput("plot4_2"),
+              plotOutput("plot4_3")
+      ),
+      
+      # Zadanie 5
+      tabItem(tabName = "zad5",
+              h2("Zadanie 5"),
+              h3("Przedstaw natezenie ruchu dla wybranych stacji w zaleznosc od miesiaca/dnia tygodnia/typu dnia"),
+              dateRangeInput('dateRange5', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              selectInput("stacja5", "Wybierz stacje", choices = unique(przejazdy$Stacja), multiple = TRUE),
+              plotOutput("plot5_1"),
+              plotOutput("plot5_2"),
+              plotOutput("plot5_3")
+      ),
+      
+      # Zadanie 6
+      tabItem(tabName = "zad6",
+              h2("Zadanie 6"),
+              h3("Dla wybranej stacji przedstaw zależność między liczbą przejazdów a wybranymi warunkami pogodowymi"),
+              dateRangeInput('dateRange6', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              selectInput("stacja6", "Wybierz stacje", choices = unique(przejazdy$Stacja)),
+              selectInput("pogoda6", "Wybierz warunki pogodowe", choices = c("Zachmurzenie", "Wiatr", "Temperatura", "Ciśnienie_woda", "Wilgotność", "Ciśnienie_stacja", "Ciśnienie_morze", "Opady_dzień", "Opady_noc")),
+              plotOutput("plot6")
+      ),
+      
+      # Zadanie 7
+      tabItem(tabName = "zad7",
+              h2("Zadanie 7"),
+              h3("Dla wybranych stacji przedstaw zależność między liczbą przejazdów a wybranymi warunkami pogodowymi"),
+              dateRangeInput('dateRange7', 'Wybierz zakres dat', start = min(przejazdy$Data), end = max(przejazdy$Data)),
+              selectInput("stacja7", "Wybierz stacje", choices = unique(przejazdy$Stacja), multiple = TRUE),
+              selectInput("pogoda7", "Wybierz warunki pogodowe", choices = c("Zachmurzenie", "Wiatr", "Temperatura", "Ciśnienie_woda", "Wilgotność", "Ciśnienie_stacja", "Ciśnienie_morze", "Opady_dzień", "Opady_noc")),
+              plotOutput("plot7")
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+  #Strona glowna
+  output$text <- renderText({
+    paste("Zaawansowane metody wizualizacji i raportowania danych", "\nWojciech Behrendt 276299 - gr.N52-11","\n", "\nRuch rowerowy w Gdańsku jest automatycznie mierzony za pomocą kilkudziesięciu punktów (stacji pomiarowych) znajdujących się pod ścieżką rowerową w wybranych lokalizacjach.", "\nW zbiorze danych przejazdy.RData znajdują się informacje o dziennych liczbach przejazdów rowerowych w wybranych punktach oraz informacje o warunkach pogodowych w danym dniu. ",
+          "\nProszę wykonać wizualizacje w R zgodnie z poniższymi poleceniami (dla każdego polecenia należy samodzielnie dobrać odpowiedni typ wykresu i ewentualny sposób agregacji danych): ",
+          "\n",
+          "\n   1. Przedstawić rozkład liczby dni pomiarowych w poszczególnych punktach",
+          "\n   2. Dla wybranego punktu przedstawić rozkład liczby przejazdów",
+          "\n   3. Porównać punkty pod względem natężenie /rozkładu przejazdów",
+          "\n   4. Przedstawić natężenie / rozkład przejazdów dla wybranej stacji w zależności od miesiąca / dnia tygodnia / dni powszednich/weekendowych",
+          "\n   5. Porównać stacje pod względem zależności z poprzedniego punktu",
+          "\n   6. Dla wybranej stacji przedstawić zależność między liczbą przejazdów a wybranymi warunkami pogodowymi",
+          "\n   7. Porównać stacje pod względem zależności z poprzedniego punktu",
+          "\n",
+          "\nWykonane wizualizacje mogą być osobnymi wykresami i/lub częścią aplikacji wykonanej w Shiny. Jako rozwiązanie proszę załączyć wynikowe wizualizacje (np. w pdf, jpeg) oraz skrypt z kodem", "\n - kod powinien być tak zapisany, aby można było wykonać wszystkie wizualizacje po załadowaniu oryginalnych danych). ",
+          "\n",
+          "\nKomentarze Autora:",
+          "\n 1. Dashboard został podzielony na zakładki aby zwiększość jego czytelność/przejrzystość i ułatwić poruszanie się po nim",
+          "\n 2. Dla każdej zakładki udostępniono filter pozwalający filtrować daty w celu uproszczenia porównywania i eksplorowania danych",
+          "\n 3. Prawdopodobny dalszy rozwój dashboardu powinien zakładać poprawnie interaktywności wykresów oraz poprawienia ich estetyki (np. dodania 'wąsów'przy box-plotach) oraz dodaniach podstawowych statystyk opisowych dla wybranych zmiennych",
+          "\n 4. Użytecznym rozwiązaniem mogłoby być usunięcie polskich znaków ze zmiennych ponieważ występują komplikacje z encdingiem shinyapps.io",
+          sep = ""
+    )
+  })
+  
+  # Zadanie 1
+  output$plot1 <- renderPlot({
+    df1 <- przejazdy %>% filter(Data >= input$dateRange1[1], Data <= input$dateRange1[2]) %>% group_by(Stacja) %>% summarise(Days = n()) %>% arrange(Days)
+    ggplot(df1, aes(x = reorder(Stacja, Days), y = Days)) + geom_col() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x = "Stacja", y = "Liczba dni ppmiarowych")
+  })
+  
+  # Zadanie 2
+  output$plot2 <- renderPlot({
+    df2 <- filter(przejazdy, Stacja == input$stacja2, Data >= input$dateRange2[1], Data <= input$dateRange2[2])
+    ggplot(df2, aes(x = Data, y = Licznik)) + geom_line() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x = "Data", y = "Licznik")
+  })
+  
+  # Zadanie 3
+  output$plot3 <- renderPlot({
+    df3 <- filter(przejazdy, Stacja %in% input$stacja3, Data >= input$dateRange3[1], Data <= input$dateRange3[2])
+    ggplot(df3, aes(x = Data, y = Licznik, color = Stacja)) + geom_line() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x = "Data", y = "Licznik") + scale_color_discrete(name = "Stacja")
+  })
+  
+  # Zadanie 4
+  output$plot4_1 <- renderPlot({
+    df4 <- filter(przejazdy, Stacja == input$stacja4, Data >= input$dateRange4[1], Data <= input$dateRange4[2])
+    ggplot(df4, aes(x = factor(month(Data)), y = Licznik)) + geom_boxplot() + labs(x = "Miesiac", y = "Licznik")
+  })
+  
+  output$plot4_2 <- renderPlot({
+    df4 <- filter(przejazdy, Stacja == input$stacja4, Data >= input$dateRange4[1], Data <= input$dateRange4[2])
+    ggplot(df4, aes(x = factor(wday(Data)), y = Licznik)) + geom_boxplot() + labs(x = "Dzien tygodnia", y = "Licznik")
+  })
+  
+  output$plot4_3 <- renderPlot({
+    df4 <- filter(przejazdy, Stacja == input$stacja4, Data >= input$dateRange4[1], Data <= input$dateRange4[2])
+    ggplot(df4, aes(x = Weektype, y = Licznik)) + geom_boxplot() + labs(x = "Rodzaj dnia", y = "Licznik")
+  })
+  
+  # Zadanie 5
+  output$plot5_1 <- renderPlot({
+    df5 <- filter(przejazdy, Stacja %in% input$stacja5, Data >= input$dateRange5[1], Data <= input$dateRange5[2])
+    ggplot(df5, aes(x = factor(month(Data)), y = Licznik, fill = Stacja)) + geom_boxplot() + labs(x = "Miesiac", y = "Licznik") + scale_fill_discrete(name = "Stacja")
+  })
+  
+  output$plot5_2 <- renderPlot({
+    df5 <- filter(przejazdy, Stacja %in% input$stacja5, Data >= input$dateRange5[1], Data <= input$dateRange5[2])
+    ggplot(df5, aes(x = factor(wday(Data)), y = Licznik, fill = Stacja)) + geom_boxplot() + labs(x = "Dzien tygodnia", y = "Licznik") + scale_fill_discrete(name = "Stacja")
+  })
+  
+  output$plot5_3 <- renderPlot({
+    df5 <- filter(przejazdy, Stacja %in% input$stacja5, Data >= input$dateRange5[1], Data <= input$dateRange5[2])
+    ggplot(df5, aes(x = Weektype, y = Licznik, fill = Stacja)) + geom_boxplot() + labs(x = "Rodzaj dnia", y = "Licznik") + scale_fill_discrete(name = "Stacja")
+  })
+  
+  # Zadanie 6
+  output$plot6 <- renderPlot({
+    df6 <- filter(przejazdy, Stacja == input$stacja6, Data >= input$dateRange6[1], Data <= input$dateRange6[2])
+    ggplot(df6, aes_string(x = input$pogoda6, y = "Licznik")) + geom_point() + geom_smooth(method = "lm") + labs(x = input$pogoda6, y = "Licznik")
+  })
+  
+  # Zadanie 7
+  output$plot7 <- renderPlot({
+    df7 <- filter(przejazdy, Stacja %in% input$stacja7, Data >= input$dateRange7[1], Data <= input$dateRange7[2])
+    ggplot(df7, aes_string(x = input$pogoda7, y = "Licznik", color = "Stacja")) + geom_point() + geom_smooth(method = "lm") + labs(x = input$pogoda7, y = "Licznik") + scale_color_discrete(name = "Stacja")
+  })
+}
+
+shinyApp(ui = ui, server = server)
