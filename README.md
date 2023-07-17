@@ -1,1 +1,1 @@
-# University
+This repository contains my projects which I was obligated to do during my university course, however, for now I will upload only my shinny app which was necessary to pass 'Advanced Data Visualisation and Reporting Methods' subject
